@@ -22,6 +22,7 @@ setup(
     version=find_version(),
     description="Dynatracedev python EF2 extension",
     author="Dynatrace",
+    license="MIT",
     packages=find_packages(),
     python_requires=">=3.10",
     include_package_data=True,
