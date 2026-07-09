@@ -2,49 +2,162 @@
   "types": {
     "dynatrace.datasource.python:dynatracedev-endpoint": {
       "type": "object",
-      "displayName": "Dynatracedev Endpoint",
-      "summaryPattern": "Dynatracedev {url}",
+      "displayName": "NetScout source",
+      "summaryPattern": "NetScout {name}",
       "properties": {
-        "url": {
-          "displayName": "URL",
+        "name": {
+          "displayName": "Name",
+          "description": "Label for this NetScout source (used in logs and metrics).",
+          "type": "text",
+          "nullable": false,
+          "default": "netscout",
+          "constraints": [{ "type": "LENGTH", "minLength": 1, "maxLength": 200 }],
+          "maxItems": 1
+        },
+        "base_url": {
+          "displayName": "NetScout base URL",
+          "description": "e.g. https://ngenius.example.local",
           "type": "text",
           "nullable": false,
           "default": "",
-          "constraints": [
-            {
-              "type": "LENGTH",
-              "minLength": 1,
-              "maxLength": 500
-            }
-          ],
+          "constraints": [{ "type": "LENGTH", "minLength": 1, "maxLength": 500 }],
           "maxItems": 1
         },
-        "user": {
-          "displayName": "User name",
+        "records_path": {
+          "displayName": "Records path",
+          "description": "API path returning recent network transactions as JSON.",
           "type": "text",
           "nullable": false,
-          "default": "",
-          "constraints": [
-            {
-              "type": "LENGTH",
-              "minLength": 1,
-              "maxLength": 500
-            }
-          ],
+          "default": "/api/v1/network-transactions",
+          "constraints": [{ "type": "LENGTH", "minLength": 1, "maxLength": 500 }],
           "maxItems": 1
         },
-        "password": {
-          "displayName": "Password",
+        "records_json_path": {
+          "displayName": "Records JSON path",
+          "description": "Dot-path to the array of records in the response (blank = response is the array).",
+          "type": "text",
+          "nullable": true,
+          "default": "",
+          "constraints": [{ "type": "LENGTH", "maxLength": 200 }],
+          "maxItems": 1
+        },
+        "netscout_api_token": {
+          "displayName": "NetScout API token",
+          "description": "Bearer token for NetScout (leave blank to use username/password).",
           "type": "secret",
-          "nullable": false,
+          "nullable": true,
           "default": "",
-          "constraints": [
-            {
-              "type": "LENGTH",
-              "minLength": 1,
-              "maxLength": 500
-            }
-          ],
+          "constraints": [{ "type": "LENGTH", "maxLength": 2000 }],
+          "maxItems": 1
+        },
+        "netscout_username": {
+          "displayName": "NetScout username",
+          "type": "text",
+          "nullable": true,
+          "default": "",
+          "constraints": [{ "type": "LENGTH", "maxLength": 500 }],
+          "maxItems": 1
+        },
+        "netscout_password": {
+          "displayName": "NetScout password",
+          "type": "secret",
+          "nullable": true,
+          "default": "",
+          "constraints": [{ "type": "LENGTH", "maxLength": 500 }],
+          "maxItems": 1
+        },
+        "verify_tls": {
+          "displayName": "Verify TLS certificate",
+          "type": "boolean",
+          "nullable": false,
+          "default": true,
+          "maxItems": 1
+        },
+        "lookback_seconds": {
+          "displayName": "Lookback window (seconds)",
+          "description": "How far back to query each cycle. Should exceed the run interval.",
+          "type": "integer",
+          "nullable": false,
+          "default": 120,
+          "constraints": [{ "type": "RANGE", "minimum": 10, "maximum": 3600 }],
+          "maxItems": 1
+        },
+        "traceparent_field": {
+          "displayName": "Traceparent field",
+          "description": "Record field holding a W3C traceparent. Used unless trace-id field is set.",
+          "type": "text",
+          "nullable": true,
+          "default": "traceparent",
+          "constraints": [{ "type": "LENGTH", "maxLength": 200 }],
+          "maxItems": 1
+        },
+        "trace_id_field": {
+          "displayName": "Trace-id field (alternative)",
+          "description": "Record field holding a 32-hex trace id. If set, overrides traceparent.",
+          "type": "text",
+          "nullable": true,
+          "default": "",
+          "constraints": [{ "type": "LENGTH", "maxLength": 200 }],
+          "maxItems": 1
+        },
+        "parent_span_id_field": {
+          "displayName": "Parent span-id field",
+          "description": "Record field holding the 16-hex OneAgent span id (required with trace-id field).",
+          "type": "text",
+          "nullable": true,
+          "default": "",
+          "constraints": [{ "type": "LENGTH", "maxLength": 200 }],
+          "maxItems": 1
+        },
+        "start_time_field": {
+          "displayName": "Start-time field",
+          "type": "text",
+          "nullable": false,
+          "default": "start_time",
+          "constraints": [{ "type": "LENGTH", "minLength": 1, "maxLength": 200 }],
+          "maxItems": 1
+        },
+        "end_time_field": {
+          "displayName": "End-time field",
+          "description": "Blank = zero-duration span at start time.",
+          "type": "text",
+          "nullable": true,
+          "default": "end_time",
+          "constraints": [{ "type": "LENGTH", "maxLength": 200 }],
+          "maxItems": 1
+        },
+        "time_format": {
+          "displayName": "Time format",
+          "description": "One of: epoch_ms, epoch_s, epoch_ns, iso8601.",
+          "type": "text",
+          "nullable": false,
+          "default": "epoch_ms",
+          "constraints": [{ "type": "LENGTH", "minLength": 1, "maxLength": 20 }],
+          "maxItems": 1
+        },
+        "span_name_field": {
+          "displayName": "Span-name field",
+          "type": "text",
+          "nullable": true,
+          "default": "name",
+          "constraints": [{ "type": "LENGTH", "maxLength": 200 }],
+          "maxItems": 1
+        },
+        "span_name_default": {
+          "displayName": "Default span name",
+          "type": "text",
+          "nullable": false,
+          "default": "netscout.network",
+          "constraints": [{ "type": "LENGTH", "minLength": 1, "maxLength": 200 }],
+          "maxItems": 1
+        },
+        "attribute_fields": {
+          "displayName": "Attribute fields",
+          "description": "Comma-separated record fields to copy onto the span (prefixed with netscout.).",
+          "type": "text",
+          "nullable": true,
+          "default": "",
+          "constraints": [{ "type": "LENGTH", "maxLength": 2000 }],
           "maxItems": 1
         }
       }
@@ -52,40 +165,84 @@
     "pythonRemote": {
       "type": "object",
       "properties": {
+        "otlp_endpoint": {
+          "displayName": "Dynatrace OTLP traces endpoint",
+          "description": "e.g. https://{env-id}.live.dynatrace.com/api/v2/otlp/v1/traces (blank = print spans locally).",
+          "type": "text",
+          "nullable": true,
+          "default": "",
+          "constraints": [{ "type": "LENGTH", "maxLength": 500 }],
+          "maxItems": 1
+        },
+        "otlp_api_token": {
+          "displayName": "Dynatrace API token",
+          "description": "Token with the openTelemetryTrace.ingest scope.",
+          "type": "secret",
+          "nullable": true,
+          "default": "",
+          "constraints": [{ "type": "LENGTH", "maxLength": 2000 }],
+          "maxItems": 1
+        },
+        "service_name": {
+          "displayName": "OTel service.name",
+          "type": "text",
+          "nullable": false,
+          "default": "netscout",
+          "constraints": [{ "type": "LENGTH", "minLength": 1, "maxLength": 200 }],
+          "maxItems": 1
+        },
         "endpoints": {
-          "displayName": "Dynatracedev endpoint",
+          "displayName": "NetScout sources",
           "type": "list",
           "items": {
-            "type": {
-              "$ref": "#/types/dynatrace.datasource.python:dynatracedev-endpoint"
-            }
+            "type": { "$ref": "#/types/dynatrace.datasource.python:dynatracedev-endpoint" }
           },
           "nullable": false,
           "minItems": 1,
           "maxItems": 100,
-          "metaData": {
-            "addItemButton": "Add endpoint"
-          }
+          "metaData": { "addItemButton": "Add NetScout source" }
         }
       }
     },
     "pythonLocal": {
       "type": "object",
       "properties": {
+        "otlp_endpoint": {
+          "displayName": "Dynatrace OTLP traces endpoint",
+          "description": "e.g. https://{env-id}.live.dynatrace.com/api/v2/otlp/v1/traces (blank = print spans locally).",
+          "type": "text",
+          "nullable": true,
+          "default": "",
+          "constraints": [{ "type": "LENGTH", "maxLength": 500 }],
+          "maxItems": 1
+        },
+        "otlp_api_token": {
+          "displayName": "Dynatrace API token",
+          "description": "Token with the openTelemetryTrace.ingest scope.",
+          "type": "secret",
+          "nullable": true,
+          "default": "",
+          "constraints": [{ "type": "LENGTH", "maxLength": 2000 }],
+          "maxItems": 1
+        },
+        "service_name": {
+          "displayName": "OTel service.name",
+          "type": "text",
+          "nullable": false,
+          "default": "netscout",
+          "constraints": [{ "type": "LENGTH", "minLength": 1, "maxLength": 200 }],
+          "maxItems": 1
+        },
         "endpoints": {
-          "displayName": "Dynatracedev endpoint",
+          "displayName": "NetScout sources",
           "type": "list",
           "items": {
-            "type": {
-              "$ref": "#/types/dynatrace.datasource.python:dynatracedev-endpoint"
-            }
+            "type": { "$ref": "#/types/dynatrace.datasource.python:dynatracedev-endpoint" }
           },
           "nullable": false,
           "minItems": 1,
           "maxItems": 100,
-          "metaData": {
-            "addItemButton": "Add endpoint"
-          }
+          "metaData": { "addItemButton": "Add NetScout source" }
         }
       }
     }
@@ -97,22 +254,16 @@
   "ownerProductManagement": "dynatrace",
   "ownerDevelopment": "dynatrace",
   "maturity": "GENERAL_AVAILABILITY",
-  "allowedScopes": [
-    "tenant"
-  ],
+  "allowedScopes": ["tenant"],
   "multiObject": false,
   "properties": {
     "pythonLocal": {
       "displayName": "Python Local Extension",
-      "type": {
-        "$ref": "#/types/pythonLocal"
-      }
+      "type": { "$ref": "#/types/pythonLocal" }
     },
     "pythonRemote": {
       "displayName": "Python Remote Extension",
-      "type": {
-        "$ref": "#/types/pythonRemote"
-      }
+      "type": { "$ref": "#/types/pythonRemote" }
     }
   }
 }

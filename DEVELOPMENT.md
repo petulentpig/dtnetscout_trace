@@ -51,9 +51,33 @@ dt-sdk format   # ruff format
 dt-sdk upload   # upload the signed zip to a Dynatrace environment
 ```
 
+## Building for deployment (Linux wheels)
+
+The Dynatrace ActiveGate/OneAgent Python runtime is **Linux**. A plain `dt-sdk
+build` on macOS bundles macOS wheels (e.g. `protobuf-...-macosx`), which will not
+load on the runtime. For a deployable artifact, download Linux wheels:
+
+```bash
+dt-sdk build -e manylinux2014_x86_64 -p 3.10 -o
+```
+
+- `-e/--extra-platform` — target platform tag
+- `-p/--python-version` — runtime Python (3.10)
+- `-o/--only-extra-platforms` — skip the host (macOS) wheels
+
+## Dynatrace token scope
+
+Path A sends spans to the OTLP trace-ingest API, which requires an API token with
+the **`openTelemetryTrace.ingest`** scope. Endpoint:
+`https://{env-id}.live.dynatrace.com/api/v2/otlp/v1/traces` (HTTP + protobuf only).
+
 ## Layout
 
 - `dynatracedev/__main__.py` — extension entrypoint (`ExtensionImpl`: `query()`, `fastcheck()`).
+- `dynatracedev/netscout.py` — generic NetScout REST client.
+- `dynatracedev/mapping.py` — record → span mapping + trace-context parsing.
+- `dynatracedev/otlp.py` — builds leaf spans with a remote parent context, exports via OTLP.
+- `scripts/demo_emit.py` — local proof of the mapping+emit path (console exporter).
 - `extension/extension.yaml` — extension manifest (name, version, runtime).
 - `extension/activationSchema.json` — config schema shown in the Dynatrace UI.
 - `activation.json` / `secrets.json` — local config for `dt-sdk run` (`secrets.json` is gitignored).

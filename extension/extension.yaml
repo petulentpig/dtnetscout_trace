@@ -1,5 +1,5 @@
 name: custom:dynatracedev
-version: 0.0.1
+version: 0.1.0
 minDynatraceVersion: "1.285"
 author:
   name: "Dynatrace"

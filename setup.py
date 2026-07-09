@@ -25,6 +25,12 @@ setup(
     packages=find_packages(),
     python_requires=">=3.10",
     include_package_data=True,
-    install_requires=["dt-extensions-sdk"],
+    install_requires=[
+        "dt-extensions-sdk",
+        "requests>=2.31",
+        "opentelemetry-api>=1.24",
+        "opentelemetry-sdk>=1.24",
+        "opentelemetry-exporter-otlp-proto-http>=1.24",
+    ],
     extras_require={"dev": ["dt-extensions-sdk[cli]"]},
 )
