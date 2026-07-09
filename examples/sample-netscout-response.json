@@ -1,0 +1,41 @@
+{
+  "data": [
+    {
+      "record_id": "ns-000001",
+      "transaction_name": "checkout-svc -> orders-db",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "start_time_ms": 1720000000000,
+      "end_time_ms": 1720000000042,
+      "src_ip": "10.0.1.7",
+      "dst_ip": "10.0.2.19",
+      "dst_port": 5432,
+      "retransmissions": 3,
+      "network_rtt_ms": 12.4,
+      "packet_loss_pct": 0.5,
+      "app_response_time_ms": 41.8
+    },
+    {
+      "record_id": "ns-000002",
+      "transaction_name": "web -> checkout-svc",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-a1b2c3d4e5f60718-01",
+      "start_time_ms": 1720000000005,
+      "end_time_ms": 1720000000030,
+      "src_ip": "10.0.0.3",
+      "dst_ip": "10.0.1.7",
+      "dst_port": 443,
+      "retransmissions": 0,
+      "network_rtt_ms": 3.1,
+      "packet_loss_pct": 0.0,
+      "app_response_time_ms": 25.0
+    },
+    {
+      "record_id": "ns-000003",
+      "transaction_name": "no-trace-context example (will be skipped)",
+      "start_time_ms": 1720000000010,
+      "end_time_ms": 1720000000020,
+      "src_ip": "10.0.9.9",
+      "dst_ip": "10.0.9.10",
+      "dst_port": 80
+    }
+  ]
+}

@@ -16,6 +16,10 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from decimal import Decimal
+
+_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
+_EPOCH_FACTORS_NS = {"epoch_ms": 1_000_000, "epoch_s": 1_000_000_000, "epoch_ns": 1}
 
 _TRACEPARENT_RE = re.compile(r"^([0-9a-f]{2})-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})$")
 _INVALID_ID = 0
@@ -90,18 +94,26 @@ def _hex_to_int(value: str, width: int, label: str) -> int:
 
 
 def to_epoch_ns(value, time_format: str) -> int:
-    """Convert a timestamp value in ``time_format`` to epoch nanoseconds."""
-    if time_format == "epoch_ms":
-        return int(float(value) * 1_000_000)
-    if time_format == "epoch_s":
-        return int(float(value) * 1_000_000_000)
-    if time_format == "epoch_ns":
-        return int(value)
+    """Convert a timestamp value in ``time_format`` to epoch nanoseconds.
+
+    Uses exact (Decimal / integer) arithmetic so large epoch values keep full
+    nanosecond precision -- plain ``float`` multiplication would drift by ~100ns.
+    """
+    factor = _EPOCH_FACTORS_NS.get(time_format)
+    if factor is not None:
+        try:
+            return int(Decimal(str(value)) * factor)
+        except (ArithmeticError, ValueError) as exc:
+            raise MappingError(f"invalid {time_format} timestamp: {value!r}") from exc
     if time_format == "iso8601":
-        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        try:
+            dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise MappingError(f"invalid iso8601 timestamp: {value!r}") from exc
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
-        return int(dt.timestamp() * 1_000_000_000)
+        delta = dt - _EPOCH
+        return (delta.days * 86_400 + delta.seconds) * 1_000_000_000 + delta.microseconds * 1_000
     raise MappingError(f"unknown time_format: {time_format!r}")
 
 

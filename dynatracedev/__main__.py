@@ -13,9 +13,12 @@ import time
 
 from dynatrace_extension import Extension, Status, StatusValue
 
-from .mapping import MappingConfig, MappingError, RecordMapper
+from .mapping import MappingConfig, MappingError, NetworkSpan, RecordMapper, dig
 from .netscout import NetScoutClient, NetScoutConfig, NetScoutError
 from .otlp import TraceEmitter
+
+# Cap on how many dedup keys to remember per cycle (safety valve for huge volumes).
+_MAX_SEEN_PER_CYCLE = 100_000
 
 
 class ExtensionImpl(Extension):
@@ -23,10 +26,17 @@ class ExtensionImpl(Extension):
         """Scheduled every minute: poll NetScout, emit correlated spans."""
         cfg = self.activation_config
         emitter = self._get_emitter(cfg)
+        # Rolling dedup: a record can appear in two consecutive fetches because the
+        # lookback window overlaps the run interval. Remember this cycle and the
+        # previous one so we never emit the same span (and duplicate it in the
+        # trace) twice.
+        seen_prev = getattr(self, "_seen_now", set())
+        seen_now: set = set()
 
-        fetched = emitted = skipped = errors = 0
+        fetched = emitted = skipped = duplicates = errors = 0
         for endpoint in cfg.get("endpoints", []):
             label = endpoint.get("name") or endpoint.get("base_url", "netscout")
+            record_id_field = endpoint.get("record_id_field", "")
             try:
                 records = self._fetch(endpoint)
             except NetScoutError as exc:
@@ -43,6 +53,14 @@ class ExtensionImpl(Extension):
                     self.logger.debug(f"[{label}] skipping record: {exc}")
                     skipped += 1
                     continue
+
+                key = self._dedup_key(record, record_id_field, network_span)
+                if key in seen_prev or key in seen_now:
+                    duplicates += 1
+                    continue
+                if len(seen_now) < _MAX_SEEN_PER_CYCLE:
+                    seen_now.add(key)
+
                 try:
                     emitter.emit(network_span)
                     emitted += 1
@@ -50,16 +68,19 @@ class ExtensionImpl(Extension):
                     self.logger.warning(f"[{label}] emit failed: {exc}")
                     errors += 1
 
+        self._seen_now = seen_now
+
         if not emitter.flush():
             self.logger.warning("span export did not flush within the timeout")
 
         self.report_metric("netscout.records.fetched", fetched)
         self.report_metric("netscout.spans.emitted", emitted)
         self.report_metric("netscout.records.skipped", skipped)
+        self.report_metric("netscout.records.duplicates", duplicates)
         self.report_metric("netscout.errors", errors)
         self.logger.info(
-            f"netscout -> dynatrace ({emitter.target}): "
-            f"fetched={fetched} emitted={emitted} skipped={skipped} errors={errors}"
+            f"netscout -> dynatrace ({emitter.target}): fetched={fetched} "
+            f"emitted={emitted} skipped={skipped} duplicates={duplicates} errors={errors}"
         )
 
     def fastcheck(self) -> Status:
@@ -86,6 +107,16 @@ class ExtensionImpl(Extension):
                 service_name=cfg.get("service_name", "netscout"),
             )
         return self._emitter
+
+    @staticmethod
+    def _dedup_key(record: dict, record_id_field: str, span: NetworkSpan) -> tuple:
+        # Prefer a stable record id if the source provides one; otherwise fall back
+        # to the span's identity (trace, parent, and time window).
+        if record_id_field:
+            record_id = dig(record, record_id_field)
+            if record_id is not None:
+                return ("id", str(record_id))
+        return ("span", span.trace_id, span.parent_span_id, span.start_time_ns, span.end_time_ns)
 
     @staticmethod
     def _fetch(endpoint: dict) -> list[dict]:

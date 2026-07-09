@@ -32,5 +32,5 @@ setup(
         "opentelemetry-sdk>=1.24",
         "opentelemetry-exporter-otlp-proto-http>=1.24",
     ],
-    extras_require={"dev": ["dt-extensions-sdk[cli]"]},
+    extras_require={"dev": ["dt-extensions-sdk[cli]", "pytest>=7"]},
 )

@@ -41,6 +41,15 @@
           "constraints": [{ "type": "LENGTH", "maxLength": 200 }],
           "maxItems": 1
         },
+        "record_id_field": {
+          "displayName": "Record id field",
+          "description": "Optional stable per-record id used to de-duplicate across overlapping polls.",
+          "type": "text",
+          "nullable": true,
+          "default": "",
+          "constraints": [{ "type": "LENGTH", "maxLength": 200 }],
+          "maxItems": 1
+        },
         "netscout_api_token": {
           "displayName": "NetScout API token",
           "description": "Bearer token for NetScout (leave blank to use username/password).",

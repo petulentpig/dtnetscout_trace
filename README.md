@@ -4,6 +4,10 @@ A Dynatrace Extension Framework 2.0 (Python) extension that pulls **NetScout**
 network-transaction data and stitches it into existing **Dynatrace PurePath
 traces** as OpenTelemetry leaf spans.
 
+> **NetScout team, start here:** [`INTEGRATION.md`](INTEGRATION.md) explains what
+> the integration needs from your data (assumes no Dynatrace knowledge) and how to
+> validate your records locally without a Dynatrace tenant.
+
 ## What it does
 
 Each scheduling cycle the extension:
@@ -35,6 +39,9 @@ See `dynatracedev/otlp.py` (`TraceEmitter`) and `dynatracedev/mapping.py`.
 
 ### ⚠️ Hard requirement & caveats
 
+- **Dynatrace must propagate W3C trace context.** Enable the OneAgent feature
+  *Send W3C Trace Context HTTP headers* so a `traceparent` header appears on the
+  application's traffic — that's the header NetScout extracts via DPI.
 - **NetScout must expose the trace context per record** — either a W3C
   `traceparent`, or a `trace_id` + `parent_span_id` pair that matches what
   OneAgent produced. Records without a usable parent span-id are **skipped**
