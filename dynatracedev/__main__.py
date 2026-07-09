@@ -1,0 +1,40 @@
+from dynatrace_extension import Extension, Status, StatusValue
+
+
+class ExtensionImpl(Extension):
+    def query(self):
+        """
+        The query method is automatically scheduled to run every minute
+        """
+        self.logger.info("query method started for dynatracedev.")
+
+        for endpoint in self.activation_config["endpoints"]:
+            url = endpoint["url"]
+            # user = endpoint["user"]
+            # password = endpoint["password"]
+            self.logger.debug(f"Running endpoint with url '{url}'")
+
+            # Your extension code goes here, e.g.
+            # response = requests.get(url, auth=(user, password))
+
+            # Report metrics with
+            self.report_metric("metric_key", 1, dimensions={"key": "value"})
+
+        self.logger.info("query method ended for dynatracedev.")
+
+    def fastcheck(self) -> Status:
+        """
+        Use to check if the extension can run.
+        If this Activegate cannot run this extension, you can
+        raise an Exception or return StatusValue.ERROR.
+        This does not run for OneAgent extensions.
+        """
+        return Status(StatusValue.OK)
+
+
+def main():
+    ExtensionImpl(name="dynatracedev").run()
+
+
+if __name__ == "__main__":
+    main()
